@@ -38,7 +38,7 @@ namespace FeedBuilder
 		private void frmMain_Load(Object sender, EventArgs e)
 		{
 			Visible = false;
-            InitializeFormSettings();
+			InitializeFormSettings();
 			string[] args = Environment.GetCommandLineArgs();
 			// The first arg is the path to ourself
 			//If args.Count >= 2 Then
@@ -53,11 +53,15 @@ namespace FeedBuilder
 			_argParser = new ArgumentsParser(args);
 			if (!_argParser.HasArgs) return;
 			FileName = _argParser.FileName;
-			if (!string.IsNullOrEmpty(FileName)) {
-				if (File.Exists(FileName)) {
+			if (!string.IsNullOrEmpty(FileName))
+			{
+				if (File.Exists(FileName))
+				{
 					FeedBuilderSettingsProvider p = new FeedBuilderSettingsProvider();
 					p.LoadFrom(FileName);
-				} else {
+				}
+				else
+				{
 					_argParser.ShowGui = true;
 					_argParser.Build = false;
 					FileName = _argParser.FileName;
@@ -84,8 +88,9 @@ namespace FeedBuilder
 			chkIgnoreVsHost.Checked = Settings.Default.IgnoreVsHosting;
 			chkCopyFiles.Checked = Settings.Default.CopyFiles;
 			chkCleanUp.Checked = Settings.Default.CleanUp;
+            txtAddExtension.Text = Settings.Default.AddExtension;
 
-			if (Settings.Default.IgnoreFiles == null) Settings.Default.IgnoreFiles = new StringCollection();
+            if (Settings.Default.IgnoreFiles == null) Settings.Default.IgnoreFiles = new StringCollection();
 			ReadFiles();
 			UpdateTitle();
 		}
@@ -100,12 +105,14 @@ namespace FeedBuilder
 		{
 
 			if (!string.IsNullOrEmpty(txtOutputFolder.Text.Trim()) && Directory.Exists(txtOutputFolder.Text.Trim())) Settings.Default.OutputFolder = txtOutputFolder.Text.Trim();
-// ReSharper disable AssignNullToNotNullAttribute
+			// ReSharper disable AssignNullToNotNullAttribute
 			if (!string.IsNullOrEmpty(txtFeedXML.Text.Trim()) && Directory.Exists(Path.GetDirectoryName(txtFeedXML.Text.Trim()))) Settings.Default.FeedXML = txtFeedXML.Text.Trim();
-// ReSharper restore AssignNullToNotNullAttribute
+			// ReSharper restore AssignNullToNotNullAttribute
 			if (!string.IsNullOrEmpty(txtBaseURL.Text.Trim())) Settings.Default.BaseURL = txtBaseURL.Text.Trim();
 
-			Settings.Default.CompareVersion = chkVersion.Checked;
+            if (!string.IsNullOrEmpty(txtAddExtension.Text.Trim())) Settings.Default.AddExtension = txtAddExtension.Text.Trim();
+
+            Settings.Default.CompareVersion = chkVersion.Checked;
 			Settings.Default.CompareSize = chkSize.Checked;
 			Settings.Default.CompareDate = chkDate.Checked;
 			Settings.Default.CompareHash = chkHash.Checked;
@@ -115,9 +122,10 @@ namespace FeedBuilder
 			Settings.Default.CopyFiles = chkCopyFiles.Checked;
 			Settings.Default.CleanUp = chkCleanUp.Checked;
 
-			if (Settings.Default.IgnoreFiles==null) Settings.Default.IgnoreFiles = new StringCollection();
+			if (Settings.Default.IgnoreFiles == null) Settings.Default.IgnoreFiles = new StringCollection();
 			Settings.Default.IgnoreFiles.Clear();
-			foreach (ListViewItem thisItem in lstFiles.Items) {
+			foreach (ListViewItem thisItem in lstFiles.Items)
+			{
 				if (!thisItem.Checked) Settings.Default.IgnoreFiles.Add(thisItem.Text);
 			}
 		}
@@ -150,13 +158,16 @@ namespace FeedBuilder
 		private void btnOpen_Click(Object sender, EventArgs e)
 		{
 			OpenFileDialog dlg;
-			if (_openDialog == null) {
-				dlg = new OpenFileDialog {
+			if (_openDialog == null)
+			{
+				dlg = new OpenFileDialog
+				{
 					CheckFileExists = true,
 					FileName = string.IsNullOrEmpty(FileName) ? DefaultFileName : FileName
 				};
 				_openDialog = dlg;
-			} else dlg = _openDialog;
+			}
+			else dlg = _openDialog;
 			dlg.Filter = DialogFilter;
 			if (dlg.ShowDialog() != DialogResult.OK) return;
 			FeedBuilderSettingsProvider p = new FeedBuilderSettingsProvider();
@@ -216,7 +227,8 @@ namespace FeedBuilder
 		private void Build()
 		{
 			Console.WriteLine("Building NAppUpdater feed '{0}'", txtBaseURL.Text.Trim());
-			if (string.IsNullOrEmpty(txtFeedXML.Text)) {
+			if (string.IsNullOrEmpty(txtFeedXML.Text))
+			{
 				const string msg = "The feed file location needs to be defined.\n" + "The outputs cannot be generated without this.";
 				if (_argParser.ShowGui) MessageBox.Show(msg);
 				Console.WriteLine(msg);
@@ -243,64 +255,70 @@ namespace FeedBuilder
 			int itemsSkipped = 0;
 			int itemsFailed = 0;
 			int itemsMissingConditions = 0;
-			foreach (ListViewItem thisItem in lstFiles.Items) {
+			foreach (ListViewItem thisItem in lstFiles.Items)
+			{
 				string destFile = "";
 				string folder = "";
 				string filename = "";
-				try {
+				try
+				{
 					folder = Path.GetDirectoryName(txtFeedXML.Text.Trim());
 					filename = thisItem.Text;
 					if (folder != null) destFile = Path.Combine(folder, filename);
-				} catch {}
-				if (destFile == "" || folder == "" || filename == "") {
+				}
+				catch { }
+				if (destFile == "" || folder == "" || filename == "")
+				{
 					string msg = string.Format("The file could not be pathed:\nFolder:'{0}'\nFile:{1}", folder, filename);
 					if (_argParser.ShowGui) MessageBox.Show(msg);
 					Console.WriteLine(msg);
 					continue;
 				}
 
-				if (thisItem.Checked) {
+				if (thisItem.Checked)
+				{
 					var fileInfoEx = (FileInfoEx)thisItem.Tag;
 					XmlElement task = doc.CreateElement("FileUpdateTask");
 					task.SetAttribute("localPath", fileInfoEx.RelativeName);
-
-					// generate FileUpdateTask metadata items
-					task.SetAttribute("lastModified", fileInfoEx.FileInfo.LastWriteTime.ToFileTime().ToString(CultureInfo.InvariantCulture));
+                    if (!string.IsNullOrEmpty(txtAddExtension.Text)) task.SetAttribute("updateTo",fileInfoEx.RelativeName+"."+txtAddExtension.Text.Trim());
+                    // generate FileUpdateTask metadata items
+                    task.SetAttribute("lastModified", fileInfoEx.FileInfo.LastWriteTime.ToFileTime().ToString(CultureInfo.InvariantCulture));
 					task.SetAttribute("fileSize", fileInfoEx.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
 					if (!string.IsNullOrEmpty(fileInfoEx.FileVersion)) task.SetAttribute("version", fileInfoEx.FileVersion);
 
 					XmlElement conds = doc.CreateElement("Conditions");
 					XmlElement cond;
-					bool hasFirstCondition = false;
 
-                    //File Exists
-                    cond = doc.CreateElement("FileExistsCondition");
-                    cond.SetAttribute("type", "or");
-                    conds.AppendChild(cond);
-                    
+					//File Exists
+					cond = doc.CreateElement("FileExistsCondition");
+					cond.SetAttribute("type", "or-not");
+					conds.AppendChild(cond);
 
 					//Version
-					if (chkVersion.Checked && !string.IsNullOrEmpty(fileInfoEx.FileVersion)) {
+					if (chkVersion.Checked && !string.IsNullOrEmpty(fileInfoEx.FileVersion))
+					{
 						cond = doc.CreateElement("FileVersionCondition");
+						cond.SetAttribute("type", "or");
 						cond.SetAttribute("what", "below");
 						cond.SetAttribute("version", fileInfoEx.FileVersion);
 						conds.AppendChild(cond);
-						hasFirstCondition = true;
 					}
 
 					//Size
-					if (chkSize.Checked) {
+					if (chkSize.Checked)
+					{
 						cond = doc.CreateElement("FileSizeCondition");
-						cond.SetAttribute("type", hasFirstCondition ? "or-not" : "not");
+						cond.SetAttribute("type", "or-not");
 						cond.SetAttribute("what", "is");
 						cond.SetAttribute("size", fileInfoEx.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
 						conds.AppendChild(cond);
 					}
 
 					//Date
-					if (chkDate.Checked) {
+					if (chkDate.Checked)
+					{
 						cond = doc.CreateElement("FileDateCondition");
-						if (hasFirstCondition) cond.SetAttribute("type", "or");
+						cond.SetAttribute("type", "or");
 						cond.SetAttribute("what", "older");
 						// local timestamp, not UTC
 						cond.SetAttribute("timestamp", fileInfoEx.FileInfo.LastWriteTime.ToFileTime().ToString(CultureInfo.InvariantCulture));
@@ -308,9 +326,10 @@ namespace FeedBuilder
 					}
 
 					//Hash
-					if (chkHash.Checked) {
+					if (chkHash.Checked)
+					{
 						cond = doc.CreateElement("FileChecksumCondition");
-						cond.SetAttribute("type", hasFirstCondition ? "or-not" : "not");
+						cond.SetAttribute("type", "or-not");
 						cond.SetAttribute("checksumType", "sha256");
 						cond.SetAttribute("checksum", fileInfoEx.Hash);
 						conds.AppendChild(cond);
@@ -320,17 +339,25 @@ namespace FeedBuilder
 					task.AppendChild(conds);
 					tasks.AppendChild(task);
 
-					if (chkCopyFiles.Checked) {
+					if (chkCopyFiles.Checked)
+					{
 						if (CopyFile(fileInfoEx.FileInfo.FullName, destFile)) itemsCopied++;
 						else itemsFailed++;
 					}
-				} else {
-					try {
-						if (chkCleanUp.Checked & File.Exists(destFile)) {
+				}
+				else
+				{
+					try
+					{
+						if (chkCleanUp.Checked & File.Exists(destFile))
+						{
 							File.Delete(destFile);
 							itemsCleaned += 1;
-						} else itemsSkipped += 1;
-					} catch (IOException) {
+						}
+						else itemsSkipped += 1;
+					}
+					catch (IOException)
+					{
 						itemsFailed += 1;
 					}
 				}
@@ -355,19 +382,25 @@ namespace FeedBuilder
 			var fi = new FileInfo(destFile);
 			var d = Directory.GetParent(fi.FullName);
 			if (!Directory.Exists(d.FullName)) CreateDirectoryPath(d.FullName);
-
+            if (!string.IsNullOrEmpty(txtAddExtension.Text)) destFile += "." + txtAddExtension.Text.Trim();
 			// Copy with delayed retry
 			int retries = 3;
-			while (retries > 0) {
-				try {
+			while (retries > 0)
+			{
+				try
+				{
 					if (File.Exists(destFile)) File.Delete(destFile);
-					File.Copy(sourceFile, destFile);
+                    File.Copy(sourceFile, destFile);
 					retries = 0; // success
 					return true;
-				} catch (IOException) {
+				}
+				catch (IOException)
+				{
 					// Failed... let's try sleeping a bit (slow disk maybe)
 					if (retries-- > 0) Thread.Sleep(200);
-				} catch (UnauthorizedAccessException) {
+				}
+				catch (UnauthorizedAccessException)
+				{
 					// same handling as IOException
 					if (retries-- > 0) Thread.Sleep(200);
 				}
@@ -379,7 +412,8 @@ namespace FeedBuilder
 		{
 			// Create the folder/path if it doesn't exist, with delayed retry
 			int retries = 3;
-			while (retries > 0 && !Directory.Exists(directoryPath)) {
+			while (retries > 0 && !Directory.Exists(directoryPath))
+			{
 				Directory.CreateDirectory(directoryPath);
 				if (retries-- < 3) Thread.Sleep(200);
 			}
@@ -390,8 +424,10 @@ namespace FeedBuilder
 			string dir = Path.GetDirectoryName(txtFeedXML.Text.Trim());
 			if (dir == null) return;
 			CreateDirectoryPath(dir);
-			Process process = new Process {
-				StartInfo = {
+			Process process = new Process
+			{
+				StartInfo =
+				{
 					UseShellExecute = true,
 					FileName = dir
 				}
@@ -401,7 +437,8 @@ namespace FeedBuilder
 
 		private int GetImageIndex(string ext)
 		{
-			switch (ext.Trim('.')) {
+			switch (ext.Trim('.'))
+			{
 				case "bmp":
 					return 1;
 				case "dll":
@@ -440,28 +477,43 @@ namespace FeedBuilder
 
 		private void ReadFiles()
 		{
-			if (string.IsNullOrEmpty(txtOutputFolder.Text.Trim()) || !Directory.Exists(txtOutputFolder.Text.Trim())) return;
+			string outputDir = txtOutputFolder.Text.Trim();
+
+			if (string.IsNullOrEmpty(outputDir) || !Directory.Exists(outputDir))
+			{
+				return;
+			}
+
+			if (!outputDir.EndsWith("\\"))
+			{
+				outputDir += "\\";
+			}
 
 			lstFiles.BeginUpdate();
 			lstFiles.Items.Clear();
 
-			string outputDir = txtOutputFolder.Text.Trim();
-			int outputDirLength = txtOutputFolder.Text.Trim().Length;
+			FileSystemEnumerator enumerator = new FileSystemEnumerator(outputDir, "*.*", true);
+			foreach (FileInfo fi in enumerator.Matches())
+			{
+				string filePath = fi.FullName;
 
-			FileSystemEnumerator enumerator = new FileSystemEnumerator(txtOutputFolder.Text.Trim(), "*.*", true);
-			foreach (FileInfo fi in enumerator.Matches()) {
-				string thisFile = fi.FullName;
-				if ((IsIgnorable(thisFile))) continue;
-				FileInfoEx thisInfo = new FileInfoEx(thisFile,outputDirLength);
-				ListViewItem thisItem = new ListViewItem(thisInfo.RelativeName, GetImageIndex(thisInfo.FileInfo.Extension));
-				thisItem.SubItems.Add(thisInfo.FileVersion);
-				thisItem.SubItems.Add(thisInfo.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
-				thisItem.SubItems.Add(thisInfo.FileInfo.LastWriteTime.ToString(CultureInfo.InvariantCulture));
-				thisItem.SubItems.Add(thisInfo.Hash);
-				thisItem.Checked = (!Settings.Default.IgnoreFiles.Contains(thisInfo.FileInfo.Name));
-				thisItem.Tag = thisInfo;
-				lstFiles.Items.Add(thisItem);
+				if ((IsIgnorable(filePath)))
+				{
+					continue;
+				}
+
+				FileInfoEx fileInfo = new FileInfoEx(filePath, outputDir.Length);
+
+				ListViewItem item = new ListViewItem(fileInfo.RelativeName, GetImageIndex(fileInfo.FileInfo.Extension));
+				item.SubItems.Add(fileInfo.FileVersion);
+				item.SubItems.Add(fileInfo.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
+				item.SubItems.Add(fileInfo.FileInfo.LastWriteTime.ToString(CultureInfo.InvariantCulture));
+				item.SubItems.Add(fileInfo.Hash);
+				item.Checked = (!Settings.Default.IgnoreFiles.Contains(fileInfo.FileInfo.Name));
+				item.Tag = fileInfo;
+				lstFiles.Items.Add(item);
 			}
+
 			lstFiles.EndUpdate();
 		}
 
@@ -475,18 +527,23 @@ namespace FeedBuilder
 		private void Save(bool forceDialog)
 		{
 			SaveFormSettings();
-			if (forceDialog || string.IsNullOrEmpty(FileName)) {
-				SaveFileDialog dlg = new SaveFileDialog {
+			if (forceDialog || string.IsNullOrEmpty(FileName))
+			{
+				SaveFileDialog dlg = new SaveFileDialog
+				{
 					Filter = DialogFilter,
 					FileName = DefaultFileName
 				};
 				DialogResult result = dlg.ShowDialog();
-				if (result == DialogResult.OK) {
+				if (result == DialogResult.OK)
+				{
 					FeedBuilderSettingsProvider p = new FeedBuilderSettingsProvider();
 					p.SaveAs(dlg.FileName);
 					FileName = dlg.FileName;
 				}
-			} else {
+			}
+			else
+			{
 				FeedBuilderSettingsProvider p = new FeedBuilderSettingsProvider();
 				p.SaveAs(FileName);
 			}
@@ -506,13 +563,16 @@ namespace FeedBuilder
 		{
 			string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
 			if (files.Length == 0) return;
-			try {
+			try
+			{
 				string fileName = files[0];
 				FeedBuilderSettingsProvider p = new FeedBuilderSettingsProvider();
 				p.LoadFrom(fileName);
 				FileName = fileName;
 				InitializeFormSettings();
-			} catch (Exception ex) {
+			}
+			catch (Exception ex)
+			{
 				MessageBox.Show("The file could not be opened: \n" + ex.Message);
 			}
 		}
