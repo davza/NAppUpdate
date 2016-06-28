@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Feed>
   <Tasks>
-    <FileUpdateTask hotswap="false" updateTo="file:///c:/test/htmlayout.dll" localPath="htmlayout.dll">
+    <FileUpdateTask hotswap="false" updateTo="file:///C:/temp/update_test.4.0.0.0.exe" localPath="new_exe.dll">
       <Description>Fixes several bugs with the display</Description>
       <Conditions>
         <FileVersionCondition what="below" version="3.3.2.10" />
@@ -10,7 +10,7 @@
         <FileDateCondition type="or" what="is" timestamp="20091010T000000" />
       </Conditions>
     </FileUpdateTask>
-    <FileUpdateTask updateTo="file:///c:/test/htmlayout.dll" localPath="htmlayout64.dll">
+    <FileUpdateTask updateTo="file:///C:/temp/update_test.4.0.0.0.exe" localPath="htmlayout64.dll">
       <Description>Fixes several bugs with the display (for 64 bit platforms)</Description>
       <Conditions>
         <FileVersionCondition what="below" version="3.3.2.10" />
@@ -19,6 +19,6 @@
         <FileExistsCondition type="or" />
       </Conditions>
     </FileUpdateTask>
-    <FileUpdateTask hotswap="true" localPath="logo.png" updateTo="http://www.google.com/intl/en_ALL/images/srpr/logo1w.png" />
+    <!--<FileUpdateTask hotswap="true" localPath="logo.png" updateTo="http://www.google.com/intl/en_ALL/images/srpr/logo1w.png" />-->
   </Tasks>
 </Feed>

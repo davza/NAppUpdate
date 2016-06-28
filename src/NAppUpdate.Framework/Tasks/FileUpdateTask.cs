@@ -28,6 +28,7 @@ namespace NAppUpdate.Framework.Tasks
 
 		private string _destinationFile, _backupFile, _tempFile;
 
+        /// <modified by="df" on="2016-06-28"></modified>
 		public override void Prepare(Sources.IUpdateSource source)
 		{
 			if (string.IsNullOrEmpty(LocalPath))
@@ -50,11 +51,11 @@ namespace NAppUpdate.Framework.Tasks
 			UpdateManager.Instance.Logger.Log("FileUpdateTask: Downloading {0} with BaseUrl of {1} to {2}", fileName, baseUrl, tempFileLocal);
 
 			if (!source.GetData(fileName, baseUrl, OnProgress, ref tempFileLocal))
-				throw new UpdateProcessFailedException("FileUpdateTask: Failed to get file from source");
+				throw new UpdateProcessFailedException("FileUpdateTask: [GetData]: Failed to get file from source");
 
 			_tempFile = tempFileLocal;
 			if (_tempFile == null)
-				throw new UpdateProcessFailedException("FileUpdateTask: Failed to get file from source");
+				throw new UpdateProcessFailedException("FileUpdateTask: [NullFile]: Failed to get file from source");
 
 			if (!string.IsNullOrEmpty(Sha256Checksum))
 			{
